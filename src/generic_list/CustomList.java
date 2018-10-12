@@ -158,8 +158,7 @@ public class CustomList<E> implements List<E> {
 
 	/**
 	 * 
-	 * ______ / _____) _ ( (____ _| |_ ___ ____ \____ (_ _) _ \| _ \ _____) )| ||
-	 * |_| | |_| | (______/ \__)___/| __/ |_| You do not need to implement any
+	 * You do not need to implement any
 	 * methods beyond this point. ..But if you're looking for a challenge, feel
 	 * free.
 	 */
