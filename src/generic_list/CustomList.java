@@ -6,7 +6,34 @@ import java.util.List;
 import java.util.ListIterator;
 
 public class CustomList<E> implements List<E> {
-	Object[] elementData = new Object[10];
+	
+	/** Underlying array that holds the list data */
+	private Object[] elementData;
+	
+	/** Number of items currently in the list */
+	private int numElements;
+	
+	/** The total available size of the underlying array */
+	private int totalSize;
+	
+	
+	/**
+	 * Initializes the CustomList with the given starting size.
+	 * @param totalSize The starting size for the underlying data array
+	 */
+	public CustomList(int totalSize) {
+		this.totalSize = totalSize;
+		numElements = 0;
+		elementData = new Object[totalSize];
+	}
+	
+	
+	/**
+	 * Initializes the CustomList with a starting size of 10.
+	 */
+	public CustomList() {
+		this(10);
+	}
 
 	/**
 	 * Returns the number of elements in this list.
@@ -15,7 +42,7 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public int size() {
-		return 0;
+		return numElements;
 	}
 
 	/**
@@ -25,7 +52,7 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public boolean isEmpty() {
-		return false;
+		return numElements == 0;
 	}
 
 	/**
@@ -39,6 +66,11 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public boolean contains(Object o) {
+		for (int i = 0; i < numElements; i++) {
+			if (elementData[i] == o) {
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -50,7 +82,9 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public boolean add(E e) {
-		return false;
+		reSize();
+		elementData[numElements++] = e;
+		return true;
 	}
 
 	/**
@@ -67,7 +101,21 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public boolean remove(Object o) {
-		return false;
+		boolean found = false;
+		for (int i = 0; i < numElements; i++) {
+			if (elementData[i] == o) {
+				found = true;
+			}
+			if (found) {
+				try {
+					elementData[i] = elementData[i + 1];
+				} catch (IndexOutOfBoundsException ex) {
+					// End of list - do nothing
+				}
+			}
+		}
+		if (found) { numElements--; }
+		return found;
 	}
 
 	/**
@@ -76,6 +124,9 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public void clear() {
+		numElements = 0;
+		totalSize = 10;
+		elementData = new Object[totalSize];
 	}
 
 	/**
@@ -87,8 +138,8 @@ public class CustomList<E> implements List<E> {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public E get(int index) {
-		return null;
+	public E get(int index) throws IndexOutOfBoundsException {
+		return (E) elementData[index];
 	}
 
 	/**
@@ -100,8 +151,11 @@ public class CustomList<E> implements List<E> {
 	 * @return the element previously at the specified position
 	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
-	public E set(int index, E element) {
-		return null;
+	@SuppressWarnings("unchecked")
+	public E set(int index, E element) throws IndexOutOfBoundsException {
+		Object previousObj = elementData[index];
+		elementData[index] = element;
+		return (E) previousObj;
 	}
 
 	/**
@@ -114,7 +168,18 @@ public class CustomList<E> implements List<E> {
 	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
 	@Override
-	public void add(int index, E element) {
+	public void add(int index, E element) throws IndexOutOfBoundsException {
+		reSize();
+		Object[] newArray = new Object[totalSize];
+		for (int i = 0, j = 0; j < numElements; i++, j++) {
+			if (i == index) {
+				newArray[i] = element;
+				i++;
+			}
+			newArray[i] = elementData[j];
+		}
+		numElements++;
+		elementData = newArray;
 	}
 
 	/**
@@ -125,9 +190,20 @@ public class CustomList<E> implements List<E> {
 	 * @return the element that was removed from the list
 	 * @throws IndexOutOfBoundsException {@inheritDoc}
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
-	public E remove(int index) {
-		return null;
+	public E remove(int index) throws IndexOutOfBoundsException {
+		Object previousObj = elementData[index];
+		for (int i = index; i < numElements; i++) {
+			try {
+				elementData[i] = elementData[i + 1];
+			} catch (IndexOutOfBoundsException ex) {
+				// End of list - set last element to null
+				elementData[i] = null;
+			}
+		}
+		numElements--;
+		return (E) previousObj;
 	}
 
 	/**
@@ -139,8 +215,12 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public int indexOf(Object o) {
-		// TODO Auto-generated method stub
-		return 0;
+		for (int i = 0; i < numElements; i++) {
+			if (elementData[i] == o) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -152,8 +232,12 @@ public class CustomList<E> implements List<E> {
 	 */
 	@Override
 	public int lastIndexOf(Object o) {
-		// TODO Auto-generated method stub
-		return 0;
+		for (int i = numElements; i >= 0; i--) {
+			if (elementData[i] == o) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -216,6 +300,17 @@ public class CustomList<E> implements List<E> {
 	@Override
 	public boolean retainAll(Collection<?> c) {
 		return false;
+	}
+	
+	private void reSize() {
+		if (numElements == totalSize - 2) {
+			totalSize += 10;
+			Object[] newArray = new Object[totalSize];
+			for (int i = 0; i < numElements; i++) {
+				newArray[i] = elementData[i];
+			}
+			elementData = newArray;
+		}
 	}
 
 }
